@@ -85,7 +85,7 @@ export default {
     </div>
     <div v-if="productRender === 1"  class="flex gap-5 flex-wrap justify-center">
       <div
-        class="w-1/6 border-[1px] rounded-lg flex flex-col"
+        class="w-1/2 xl:w-1/6 border-[1px] rounded-lg flex flex-col md:w-1/3 "
         v-for="product in products"
         :key="product.id"
       >
