@@ -1,95 +1,20 @@
 <script>
-import add from '@/assets/Image/add.png';
-import minus from '@/assets/Image/line.png';
-
 export default {
-  props: {
-    originValue: {
-      type: Number,
-      required: false,
-      default: 1,
-    },
-    min: {
-      type: Number,
-      required: false,
-      default: 1,
-    },
-  },
+  props: { originValue: { type: Number, default: 1 }, min: { type: Number, default: 1 } },
   emits: ['valueChanged'],
-  data() {
-    return {
-      image: {
-        add,
-        minus,
-      },
-      value: this.originValue,
-    };
-  },
-  watch: {
-    originValue: {
-      handler(originValue) {
-        this.value = originValue;
-      },
-    },
-    value: {
-      handler(value) {
-        this.$emit('valueChanged', value);
-      },
-    },
-  },
   methods: {
-    // 減數值
-    minusNum() {
-      const { value, min } = this;
-      if (value === min) return;
-      if (value < min) {
-        this.value = min;
-      } else {
-        this.value--;
-      }
-    },
-    // 加數值
-    addNum() {
-
-      this.value++;
-
-    },
-    // 手打數值
-    typeNum() {
-      const { value, min } = this;
-
-      if (value < min) {
-        this.value = min;
-      }
+    update(value) {
+      const number = Number(value);
+      this.$emit('valueChanged', Number.isFinite(number) ? Math.max(this.min, Math.min(99, Math.floor(number))) : this.min);
+      this.$forceUpdate();
     },
   },
 };
 </script>
-
 <template>
-  <section class="count-btn">
-    <div class="pill">
-      <div class="border border-main-grey border-1 rounded-l-full w-[30px] h-[35px] text-xl float-left cursor-pointer flex justify-center items-center" @click="minusNum()">
-        <img :src="image.minus" alt="減">
-      </div>
-      <div class="border border-main-grey border-x-0 border-y-1 grow h-[35px] flex justify-center items-center text-xl">
-        <input v-model="value" type="number" :min="min" class="h-[30px] w-[50px] border-0 p-0 text-center md:w-[40px]" @change="typeNum()">
-      </div>
-      <div class="border border-main-grey border-1 rounded-r-full w-[30px] h-[35px] text-xl float-right cursor-pointer flex justify-center items-center" @click="addNum()">
-        <img :src="image.add" alt="加">
-      </div>
-    </div>
-  </section>
+  <div class="quantity-control">
+    <button type="button" aria-label="減少數量" :disabled="originValue <= min" @click="update(originValue - 1)">−</button>
+    <input :value="originValue" type="number" :min="min" max="99" aria-label="商品數量" @change="update($event.target.value); $event.target.value = Math.max(min, Math.min(99, Math.floor(Number($event.target.value) || min)))">
+    <button type="button" aria-label="增加數量" :disabled="originValue >= 99" @click="update(originValue + 1)">+</button>
+  </div>
 </template>
-
-<style lang="scss" scoped>
-.count-btn {
-  @apply flex;
-  .pill {
-    @apply flex grow;
-  }
-  img {
-    @apply select-none;
-  }
-}
-</style>

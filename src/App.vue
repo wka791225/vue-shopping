@@ -1,56 +1,26 @@
 <script>
 import { RouterView } from 'vue-router';
-import shoppingCar from '@/assets/Image/shopcar.svg';
 export default {
-  // 元件宣告
-  components: {
-    RouterView
-  },
-  data(){
-    return {
-      shoppingCar,
-      shoppingList: 0,
-    }
-  },
-  // computed: {
-  //   shoppingCarLength() {
-  //     return JSON.parse(localStorage.getItem('cart'))?.length || 0;
-  //   }
-  // },
+  components: { RouterView },
+  data: () => ({ shoppingList: 0 }),
   methods: {
     updateCartLength() {
       this.shoppingList = JSON.parse(localStorage.getItem('cart'))?.length || 0;
-    }
+    },
   },
-  mounted() {
-    this.updateCartLength();
-  }
-  }
+  mounted() { this.updateCartLength(); },
+};
 </script>
 
 <template>
-   <!-- 觀察你的設計稿 把共用的部分放在此頁面 -->
-   <header class="w-full items-center px-1 bg-black text-yellow-200 fixed top-0 flex justify-between h-[40px]">
-    <div>
-      <!-- <RouterLink to="/todolist">todolist</RouterLink> -->
-      <RouterLink to="/shopping">shopping</RouterLink>
-    </div>
-    <div class="pr-5 relative ">
-      <RouterLink to="/Shoppingcar">
-        <img class="w-[30px]" :src="shoppingCar" alt="" srcset="">
-      </RouterLink>
-      <div class="absolute top-[0px] z-10 right-[17px] w-[16px] h-[16px] flex justify-center items-center rounded-full bg-red-600">{{ shoppingList }}</div>
-    </div>
+  <div class="announcement">GOOD FINDS, EVERY DAY. <span>把喜歡的日常，帶回家。</span></div>
+  <header class="site-header">
+    <RouterLink class="brand" to="/shopping" aria-label="日常選物首頁"><span class="brand-mark">m.</span><span>日常選物<small> mellow market</small></span></RouterLink>
+    <nav aria-label="主要導覽">
+      <RouterLink class="nav-shop" to="/shopping">探索商品</RouterLink>
+      <RouterLink class="cart-link" to="/Shoppingcar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 7h14l1 14H4L5 7Z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg><span>購物袋</span><b>{{ shoppingList }}</b></RouterLink>
+    </nav>
   </header>
-  <main class="w-full pt-[50px] font-big">
-    <RouterView @cart-updated="updateCartLength"/>
-
-  </main>
-  <footer>
-  </footer>
-
+  <main class="site-main"><RouterView @cart-updated="updateCartLength" /></main>
+  <footer class="site-footer"><RouterLink class="brand" to="/shopping">mellow market<span class="footer-dot">✳</span></RouterLink><p>好好挑選，慢慢生活。</p><small>© {{ new Date().getFullYear() }} 日常選物</small></footer>
 </template>
-
-<style scoped>
-
-</style>

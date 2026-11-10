@@ -1,170 +1,51 @@
-<!-- 商品列表頁面，利用卡片的形式陳列商品並顯示商品名稱、商品圖片、敘述、加入購物車按鈕及可以增加減少購買數量 -->
 <script>
 import jsonData from '@/assets/Json/MOCK_DATA.json';
-import shoppingCar from '@/assets/Image/shoping-car.png';
 import CountButton from '@/components/CountButton.vue';
-import block from '@/assets/Image/mesh.png';
-import blockGrey from '@/assets/Image/mesh-grey.png';
-import list from '@/assets/Image/list.png';
-import listGrey from '@/assets/Image/list-grey.png';
 export default {
-  components: {
-    CountButton,
+  components: { CountButton },
+  emits: ['cart-updated'],
+  data: () => ({ products: jsonData.map(product => ({ ...product })), productRender: 1, search: '', sort: 'default', notice: '', noticeTimer: null }),
+  computed: {
+    filteredProducts() {
+      const products = this.products.filter(product => `${product.name} ${product.description}`.toLowerCase().includes(this.search.toLowerCase()));
+      if (this.sort === 'low') products.sort((a, b) => a.price - b.price);
+      if (this.sort === 'high') products.sort((a, b) => b.price - a.price);
+      return products;
+    },
   },
-  data() {
-    return {
-      products: jsonData,
-      shoppingCar,
-      productRender: 1,
-      imgIcon: {
-        block,
-        blockGrey,
-        list,
-        listGrey,
-      },
-    };
-  },
+  beforeUnmount() { clearTimeout(this.noticeTimer); },
   methods: {
     addCart(product) {
-      // 從 localStorage 中取得購物車的資料
-      let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-      // 檢查該產品是否已在購物車中
-      let existingProduct = cart.find((item) => item.id === product.id);
-
-      if (existingProduct) {
-        // 如果產品已存在，更新其數量
-        existingProduct.quantity += product.quantity;
-      } else {
-        // 如果產品不存在，將其加入購物車
-        cart.push(product);
-      }
-
-      // 將更新後的購物車資料存回 localStorage
-      localStorage.setItem("cart", JSON.stringify(cart));
-
-      // 發出一個事件，讓父組件知道購物車已經更新
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const existing = cart.find(item => item.id === product.id);
+      if (existing) existing.quantity += product.quantity;
+      else cart.push({ ...product });
+      localStorage.setItem('cart', JSON.stringify(cart));
       this.$emit('cart-updated');
-    },
-    /**
-     * 減少數量函數
-     * @param {string} practice - 操作類型，可以是 'reduce' 或 'add'
-     * @param {object} item - 商品物件
-     */
-    decreaseQuantity(practice, item) {
-      if (practice === 'reduce') {
-        if (item.quantity > 1) {
-          item.quantity -= 1;
-        } else {
-          item.quantity = 1;
-        }
-      } else if (practice === 'add') {
-        if (item.quantity < 99) {
-          item.quantity += 1;
-        } else {
-          item.quantity = 99;
-        }
-      }
-    },
-    listRender(type) {
-      this.productRender = type;
+      this.notice = `${product.name} 已加入購物袋`;
+      clearTimeout(this.noticeTimer);
+      this.noticeTimer = setTimeout(() => { this.notice = ''; }, 2600);
     },
   },
 };
 </script>
+
 <template>
-  <div class="w-full px-5">
-    <div>
-      <h1 class="mb-3 text-3xl font-bold">商品列表</h1>
-      <div class="flex justify-end items-center">
-        <img v-if="productRender === 1" class="mr-1" :src="imgIcon.block" alt="卡片顯示">
-        <img v-else :src="imgIcon.blockGrey" class="mr-1" alt="卡片顯示" @click="listRender(1)">
-        <img v-if="productRender === 2" class="mr-1" :src="imgIcon.list" alt="條列顯示">
-        <img v-else :src="imgIcon.listGrey" class="mr-1" alt="條列顯示" @click="listRender(2)">
-      </div>
+  <section class="catalog-hero">
+    <div><p class="eyebrow">THE EVERYDAY COLLECTION</p><h1>讓日常，多一點<span>喜歡。</span></h1><p class="hero-copy">一點靈感，一些好物。<br>從這裡開始，找到屬於你的生活提案。</p><a class="hero-link" href="#collection">探索日常選物 <span>↗</span></a></div>
+    <div class="hero-art" aria-hidden="true"><div class="art-orbit"></div><span class="art-label">A LITTLE<br>EVERYDAY<br>INSPIRATION.</span><div class="art-vase"></div><div class="art-stem"></div><div class="art-leaf leaf-one"></div><div class="art-leaf leaf-two"></div><div class="art-disc">m.</div><span class="art-caption">CURATED WITH CARE — VOL. 01</span></div>
+  </section>
+  <section id="collection" class="collection">
+    <div class="collection-heading"><div><p class="eyebrow">FIND YOUR FAVORITES</p><h2>所有商品 <span>{{ products.length }}</span></h2></div><p>為生活留一點美好的空間。</p></div>
+    <div class="catalog-toolbar"><label class="search-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input v-model="search" type="search" placeholder="尋找喜歡的商品…" aria-label="搜尋商品"></label><div class="toolbar-actions"><select v-model="sort" aria-label="商品排序"><option value="default">預設排序</option><option value="low">價格：由低到高</option><option value="high">價格：由高到低</option></select><div class="view-switch"><button type="button" :class="{ active: productRender === 1 }" :aria-pressed="productRender === 1" aria-label="卡片顯示" @click="productRender = 1">▦</button><button type="button" :class="{ active: productRender === 2 }" :aria-pressed="productRender === 2" aria-label="列表顯示" @click="productRender = 2">☰</button></div></div></div>
+    <div class="product-grid" :class="{ 'list-view': productRender === 2 }">
+      <article v-for="product in filteredProducts" :key="product.id" class="product-card">
+        <div class="product-image" :class="`tone-${(product.id - 1) % 4}`"><img :src="product.pic.trim()" :alt="product.name" loading="lazy" @error="$event.target.style.display = 'none'"><span class="product-index">NO. {{ String(product.id).padStart(2, '0') }}</span><span class="image-caption">EVERYDAY ESSENTIALS</span></div>
+        <div class="product-details"><p class="product-category">日常精選 / COLLECTION</p><h3>{{ product.name }}</h3><p class="product-description" :title="product.description">{{ product.description }}</p><p class="product-price"><small>NT$</small> {{ product.price.toLocaleString('zh-TW') }}</p><div class="product-actions"><CountButton :origin-value="product.quantity" :min="1" @value-changed="value => product.quantity = value" /><button type="button" class="add-button" @click="addCart(product)">加入購物袋 <span>＋</span></button></div></div>
+      </article>
     </div>
-    <div v-if="productRender === 1"  class="flex gap-5 flex-wrap justify-center">
-      <div
-        class="w-1/2 xl:w-1/6 border-[1px] rounded-lg flex flex-col md:w-1/3 "
-        v-for="product in products"
-        :key="product.id"
-      >
-        <img class="rounded-t-lg w-full" :src="product.pic" alt="商品圖片" />
-     
-        <div class="bg-slate-100  h-[250px] bg-opacity-30 pl-3 flex flex-col gap-3 pt-3">
-          <h2>{{ product.name }}</h2>
-          <p>{{ product.description }}</p>
-          <p>價格: {{ product.price }}</p>
-        </div>
-          <div class="flex mb-5 gap-5">
-              數量:
-              <CountButton class="product-qty w-[150px] mb-3 lg:!mb-0 h-[35px] lg:mr-3" :origin-value="product.quantity" :min="1" @value-changed="(value) => product.quantity = value" />
-          </div>
-        <button
-          type="button"
-          class="flex justify-center items-center bg-[#50468c] text-white rounded-b-lg px-4 py-1 cursor-pointer md:p-0 "
-          @click="addCart(product)"
-        >
-        <img :src="shoppingCar" alt="" srcset="">
-          加入購物車
-        </button>
-      </div>
-    </div>
-    <div v-if="productRender === 2" class="mb-6 px-5">
-          <div class="grid-table">
-            <div class="grid-thead">
-              <div class="grid-cols-6 grid border-y border-main-deep text-main-deep font-bold py-1 gap-x-3">
-                <div class="gird-th text-center">商品圖片</div>
-                <div class="gird-th">商品名稱</div>
-                <div class="gird-th text-center">商品描述</div>
-                <div class="gird-th text-center">價錢</div>
-                <div class="gird-th opacity-0">操作</div>
-              </div>
-            </div>
-            <div class="grid-tbody">
-              <div v-for="(item) in products ?? []" :key="item.id" class="grid-tr grid-cols-6 grid py-1 border-b border-main-deep min-h-[80px] gap-x-3 md:gap-x-1 lg:first:border-t lg:!py-3">
-                  <img  :src="item.pic" alt="商品圖示" class="w-[250px] h-full object-cover">
-                  <div class="flex items-center">{{ item.name }}</div>
-                  <div class="flex items-center">{{ item.description }}</div>
-                  <div class="gird-td flex justify-center items-center">${{ item.price }}</div>
-                  <div class="gird-td flex justify-center  items-center lg:flex-wrap lg:!justify-between lg:pt-6   md:!pt-0">
-                    <div class="card-btns-list flex-col lg:!flex-row lg:w-full lg:items-center">
-                      <CountButton class="product-qty w-[150px] mb-3 lg:!mb-0 h-[35px] lg:mr-3" :origin-value="item.quantity" :min="1" @value-changed="(value) => item.quantity = value" />
-                      <div class="flex justify-center items-center bg-[#50468c] text-white rounded-full px-4 py-1 cursor-pointer md:p-0 w-[150px]" @click="addCart(item)">
-                        <img :src="shoppingCar" class="mr-2 md:mr-0" alt="購物車圖示">
-                        <span>
-                        加入購物車
-                        </span>
-                      </div>
-                    </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-  </div>
+    <div v-if="!filteredProducts.length" class="empty-state"><h3>還沒有找到相符的商品</h3><p>換個關鍵字，再找找看。</p><button class="primary-button" @click="search = ''">查看所有商品</button></div>
+    <p class="collection-end">{{ filteredProducts.length }} 件選物 · 每一件，都是生活的靈感</p>
+  </section>
+  <Transition name="toast"><div v-if="notice" class="cart-toast" role="status"><span>✓</span>{{ notice }}<RouterLink to="/Shoppingcar">查看購物袋 →</RouterLink></div></Transition>
 </template>
-<!-- <style lang="scss" scoped>
- .grid-table {
-    .grid-thead {
-      .grid-tr {
-        @apply grid border-y border-main-deep text-main-deep font-bold py-1 gap-x-3;
-        grid-template-columns: 200px 3fr 1fr 1fr 200px 150px;
-      }
-    }
-    .grid-tbody {
-      .grid-tr {
-        @apply grid py-1 border-b border-main-deep min-h-[80px] gap-x-3 md:gap-x-1;
-        grid-template-columns: 200px 3fr 1fr 1fr 200px 150px;
-        .scientific {
-          @apply text-main-deep font-bold;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          display: -webkit-box;
-          -webkit-box-orient: vertical;
-          -webkit-line-clamp: 2;
-        }
-      }
-    }
-  }
-</style> -->
